@@ -1,11 +1,21 @@
 ---
-title: "rodri-mario.github.io"
+title: "Mario Rodriguez"
+toc: false
+about:
+  id: intro-heading
+  template: jolla
+  image: /images/profile_pic.jpg
+  image-shape: round
+  links: 
+    - icon: envelope
+      href: mailto:rodrig19@stolaf.edu
+      aria-label: Email
+    - icon: github
+      href: https://github.com/Rodri-Mario
+      aria-label: GitHub
+    - icon: linkedin
+      href: https://www.linkedin.com/in/mario-rodriguez-dev/
+      aria-label: LinkedIn
 ---
 
-This is a Quarto website.
-
-To learn more about Quarto websites visit <https://quarto.org/docs/websites>.
-
-```{r}
-1 + 1
-```
+Welcome to my site, I'm Mario! I'm currently an aspiring Software Developer studying Mathematics and Computer Science at [St. Olaf College](https://wp.stolaf.edu/). I am a fast learner and love tackling complex problems of any type. In my of time you will often find me enjoying a nice board game with friends or in a good book.

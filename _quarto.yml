@@ -3,16 +3,21 @@ project:
   output-dir: docs
 
 website:
-  title: "rodri-mario.github.io"
+  title: "Mario Rodriguez"
   navbar:
     left:
       - href: index.qmd
         text: Home
-      - about.qmd
+      - href: projects.qmd
+        text: Projects
+  page-footer: 
+    background: light
+    left: © 2024 Mario Rodriguez
+    right: Soruce code for this website can be found [here](https://github.com/Rodri-Mario/rodri-mario.github.io).
 
 format:
   html:
-    theme: cosmo
+    theme: minty
     css: styles.css
     toc: true
 

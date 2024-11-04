@@ -1,0 +1,171 @@
+---
+title: 'Mini-Project 1'
+description: "A Project from Data Science 2 where we explored Choropleth Maps"
+format:
+  html: default
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+#|include: false
+
+# Load libraries -------------------------------------------------------------- 
+library(tidyverse)
+library(sf)
+library(leaflet)
+```
+
+```{r}
+#|include: false
+
+# Load data and clean ---------------------------------------------------------
+#Data from U.S. Energy Information Administration - State Energy Data System
+raw_energy_data <- read.csv("eai_residential_energy_consumption.csv", na.strings = "NA")
+
+#function to filter out extra states and terriories we don't want to include in
+#our maps.
+filter_extra_states <- function(df, state_var){
+  df |> 
+    filter(!({{ state_var }} %in% c("Alaska", 
+                        "Hawaii", 
+                        "Dist. of Col.", 
+                        "District of Columbia",
+                        "Puerto Rico")
+          )
+    )
+}
+
+# Creating tibble for numerical visualizations --------------------------------
+clean_num_energy_data <- raw_energy_data |> 
+  #Remove Alaska, Hawaii, Dist. of Columbia, and Puerto Rico, because we are  
+  #graphing just the continental United Sates.
+  mutate(state = str_squish(state)) |> 
+  filter_extra_states(state)|> 
+  #Make the tibble longer, giving each state/source pair it's own row
+  pivot_longer(
+    cols = natural_gas:electrical_system_energy_losses, 
+    names_to = "source",
+    values_to = "consumption"
+  ) |> 
+  #Find total energy consumption for each state 
+  group_by(state) |> 
+  summarise(
+    total_consumption = sum(consumption, na.rm = TRUE)
+  )
+  
+# Creating tibble for categorical visualizations ------------------------------
+clean_cat_energy_data <- raw_energy_data |>
+  #Remove Alaska, Hawaii, Dist. of Columbia, and Puerto Rico, because we are  
+  #graphing just the continental United Sates.
+  mutate(state = str_squish(state)) |> 
+  filter_extra_states(state)|> 
+  #Not including electrical_system_energy_losses as it not a source of energy
+  select(!(electrical_system_energy_losses)) |> 
+  #Make the tibble longer, giving each state/source pair it's own row
+  pivot_longer(
+    cols = natural_gas:imported_electricity, 
+    names_to = "source",
+    values_to = "consumption"
+  ) |> 
+  #Returns a tibble only showing the energy source with the greatest consumption   #  for each state.
+  group_by(state) |> 
+  slice(which.max(consumption)) |> 
+  #Renaming column names to be more detailed
+  rename(
+    main_source = source,
+    main_source_consumption = consumption
+  )
+```
+
+```{r}
+#| include: false
+# Get info to draw US states --------------------------------------------------
+states_sf <- read_sf("https://rstudio.github.io/leaflet/json/us-states.geojson") |> 
+  select(name, geometry) |> 
+  mutate(name = str_squish(name)) |> 
+  filter_extra_states(name)
+  
+```
+
+```{r}
+# Combine tibbles with info on who to draw states -----------------------------
+#Check that the joins are valid (they are are)
+  #check join between state_sf and clean_num_energy_data
+  states_sf |> 
+    left_join(clean_num_energy_data, join_by(name == state)) |> 
+    print(n = Inf)
+  #check join between state_sf and clean_cat_energy_data
+  states_sf |> 
+    left_join(clean_cat_energy_data, join_by(name == state)) |> 
+    print(n = Inf)
+
+#Store valid joins into separate tibbles for visualizations 
+visual_cat_energy_data <- states_sf |> 
+  left_join(clean_cat_energy_data, by = c("name" = "state"))
+
+visual_num_energy_data <- states_sf |> 
+  left_join(clean_num_energy_data, by = c("name" = "state"))
+```
+
+```{r}
+#|echo: false
+# Graphing Num Static ---------------------------------------------------------
+#Creating Bins
+visual_num_energy_data |>
+  mutate(consumption_intervals = cut(total_consumption, 
+                                     breaks = c(0, 
+                                                200, 
+                                                400, 
+                                                600, 
+                                                800, 
+                                                1000, 
+                                                1200, 
+                                                1400, 
+                                                1600,
+                                                Inf
+                                              )
+                                 )
+  ) |> 
+#Plotting States using geom_sf
+  ggplot() +
+  geom_sf(aes(fill = consumption_intervals)) +
+  theme_void() +
+  scale_fill_viridis_d() +
+  labs(
+    title = "Total Energy Consumption by State for 2022",
+    fill = "Energy Consumed by Trillion Btu",
+    caption = "Data from U.S. Energy Information Administration - State Energy Data"
+  )
+```
+
+The graph above is a choropleth of the 48 states of the Continental US showing the total energy consumption of each state in 2022. Some insights that can be gained from this graph are that most of the states in the Rocky Mountains and the Great Plains consumed far less energy in 2022 than states in the Midwest. Additionally, California and Texas seems to be outlines in their region, consuming far more energy than their neighboring states.
+
+```{r, echo=FALSE}
+#|echo: false
+# Graphing Cat Static ---------------------------------------------------------
+#Change main_source values to remove '_' and use title case
+visual_cat_energy_data |> 
+  mutate(main_source = as.factor(main_source),
+         main_source = fct_recode(main_source,
+         "Imported Electricity" = "imported_electricity",
+         "Natural Gas" ="natural_gas",
+         "Petroleum"= "petroleum"
+         )
+  ) |>
+#Plotting States using geom_sf
+  ggplot() +
+  geom_sf(aes(fill = main_source)) +
+  theme_void() +
+  scale_fill_brewer(palette = "Set2") + 
+  labs(
+    title = "Most Consumed Energy Source by State for 2022",
+    fill = "Consumption by Trillion Btu",
+    caption = "Data from U.S. Energy Information Administration - State Energy Data", 
+    alt = "The graph above is a choropleth of the 48 states of the Continental US. With each state colored by which energy source they consumed the most of in 2022. There are three possible colors, Cyan which represent Imported Electricity being the most consumed, Orange which represents Natural Gas being the most consumed, and finally Purple which represents Petroleum products being the most consumed. The main trend found in this choropleth is that the states in the Rocky Mountains, the Midwest, and the Mid-Atlantic for the most part relied on Natural Gas for their energy needs. Meanwhile the sates in the South and the Southwest the most part relied on Imported Electricity. Finally, it should be noted that the majority of states in New England mainly relied on Petroleum products for their energy needs." 
+  )
+```
+
+The graph above is a choropleth of the 48 states of the Continental US showing the most consumed energy source of each state in 2022. Some insights that can be gained from this graph are that most states in the Rocky Mountains, the Midwest, and the Mid-Atlantic consumed more Natural Gas than any other energy source. We also see that most states in the South and Southwest consumed more Imported Electricity than any other energy source. It should also be noted that the very few states that consumed more Petroleum products than any other energy source can all be found in New England.
+
+Data Source: [U.S. Energy Information Administration - State Energy Data System](https://www.eia.gov/state/seds/data.php?incfile=/state/seds/sep_sum/html/sum_btu_res.html&sid=US)
