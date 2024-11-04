@@ -2,6 +2,7 @@
 title: "Mini-Project 2"
 description: "A Project from Data Science 2 where we explored web scraping"
 image: mini_project_2_pic.png
+categories: [R, Web Scraping] 
 draft: false
 format:
   html: default

@@ -7,6 +7,20 @@
     "text": "Welcome to my site, I’m Mario! I’m currently an aspiring Software Developer studying Mathematics and Computer Science at St. Olaf College. I am a fast learner and love tackling complex problems of any type. In my of time you will often find me enjoying a nice board game with friends or in a good book."
   },
   {
+    "objectID": "projects.html",
+    "href": "projects.html",
+    "title": "Projects",
+    "section": "",
+    "text": "Mini-Project 1\n\n\nA Project from Data Science 2 where we explored Choropleth Maps\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nMini-Project 2\n\n\nA Project from Data Science 2 where we explored web scraping\n\n\n\n\n\n\n\n\n\n\n\n\nNo matching items"
+  },
+  {
+    "objectID": "projects/mini_project_1/index.html",
+    "href": "projects/mini_project_1/index.html",
+    "title": "Mini-Project 1",
+    "section": "",
+    "text": "Purpose and Scope of the Project\nFor this project I decided to take data from the U.S Energy Information Administration and create Choropleth maps with them. The two variables I decided to explore was the Total Energy Consumed by State and the Most Consumed Energy Source by State. Then for each variable, I made both a static and interactive version. I did this because I thought it would be valuable to understand where different places draw their energy from and how enegery they draw. This information could be useful in future endeavors to modify our power grid, such as deciding which places need or understanding which places would be the best candidates for alternative energy sources.\n\n\nGraphing Numerical Static\n\n\n\n\n\n\n\n\n\nThe graph above is a choropleth of the 48 states of the Continental US showing the total energy consumption of each state in 2022. Some insights that can be gained from this graph are that most of the states in the Rocky Mountains and the Great Plains consumed far less energy in 2022 than states in the Midwest. Additionally, California and Texas seems to be outlines in their region, consuming far more energy than their neighboring states.\n\n\nGraphing Categorical Static\n\n\n\n\n\n\n\n\n\nThe graph above is a choropleth of the 48 states of the Continental US showing the most consumed energy source of each state in 2022. Some insights that can be gained from this graph are that most states in the Rocky Mountains, the Midwest, and the Mid-Atlantic consumed more Natural Gas than any other energy source. We also see that most states in the South and Southwest consumed more Imported Electricity than any other energy source. It should also be noted that the very few states that consumed more Petroleum products than any other energy source can all be found in New England.\n\n\nGraphing Numerical Interactive\n\n\n\n\n\n\n\n\nGraphing Categorial Interactive\n\n\n[1] \"Imported Electricity\" \"Natural Gas\"          \"Petroleum\"           \n\n\n\n\n\n\nData Source: U.S. Energy Information Administration - State Energy Data System"
+  },
+  {
     "objectID": "projects/mini_project_2/index.html",
     "href": "projects/mini_project_2/index.html",
     "title": "Mini-Project 2",

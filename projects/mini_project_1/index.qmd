@@ -1,6 +1,8 @@
 ---
 title: 'Mini-Project 1'
 description: "A Project from Data Science 2 where we explored Choropleth Maps"
+image: mini_project_1_pic.png
+categories: [R, Data Visualizations]
 format:
   html: default
 editor_options: 
@@ -8,20 +10,25 @@ editor_options:
 ---
 
 ```{r}
-#|include: false
+#| include: false
 
 # Load libraries -------------------------------------------------------------- 
 library(tidyverse)
 library(sf)
 library(leaflet)
+library(htmltools)
 ```
 
+### Purpose and Scope of the Project
+
+For this project I decided to take data from the U.S Energy Information Administration and create Choropleth maps with them. The two variables I decided to explore was the Total Energy Consumed by State and the Most Consumed Energy Source by State. Then for each variable, I made both a static and interactive version. I did this because I thought it would be valuable to understand where different places draw their energy from and how enegery they draw. This information could be useful in future endeavors to modify our power grid, such as deciding which places need or understanding which places would be the best candidates for alternative energy sources. 
+
 ```{r}
-#|include: false
+#| include: false
 
 # Load data and clean ---------------------------------------------------------
 #Data from U.S. Energy Information Administration - State Energy Data System
-raw_energy_data <- read.csv("eai_residential_energy_consumption.csv", na.strings = "NA")
+raw_energy_data <- read.csv("https://raw.githubusercontent.com/Rodri-Mario/rodri-mario.github.io/refs/heads/main/projects/mini_project_1/data/eai_residential_energy_consumption.csv", na.strings = "NA")
 
 #function to filter out extra states and terriories we don't want to include in
 #our maps.
@@ -36,7 +43,7 @@ filter_extra_states <- function(df, state_var){
     )
 }
 
-# Creating tibble for numerical visualizations --------------------------------
+# Creating tibble for static numerical visualizations --------------------------------
 clean_num_energy_data <- raw_energy_data |> 
   #Remove Alaska, Hawaii, Dist. of Columbia, and Puerto Rico, because we are  
   #graphing just the continental United Sates.
@@ -54,7 +61,48 @@ clean_num_energy_data <- raw_energy_data |>
     total_consumption = sum(consumption, na.rm = TRUE)
   )
   
-# Creating tibble for categorical visualizations ------------------------------
+# Creating tibble for static categorical visualizations ------------------------------
+clean_cat_energy_data <- raw_energy_data |>
+  #Remove Alaska, Hawaii, Dist. of Columbia, and Puerto Rico, because we are  
+  #graphing just the continental United Sates.
+  mutate(state = str_squish(state)) |> 
+  filter_extra_states(state)|> 
+  #Not including electrical_system_energy_losses as it not a source of energy
+  select(!(electrical_system_energy_losses)) |> 
+  #Make the tibble longer, giving each state/source pair it's own row
+  pivot_longer(
+    cols = natural_gas:imported_electricity, 
+    names_to = "source",
+    values_to = "consumption"
+  ) |> 
+  #Returns a tibble only showing the energy source with the greatest consumption   #  for each state.
+  group_by(state) |> 
+  slice(which.max(consumption)) |> 
+  #Renaming column names to be more detailed
+  rename(
+    main_source = source,
+    main_source_consumption = consumption
+  )
+
+# Creating tibble for interactive numerical visualizations --------------------------------
+clean_num_energy_data <- raw_energy_data |> 
+  #Remove Alaska, Hawaii, Dist. of Columbia, and Puerto Rico, because we are  
+  #graphing just the continental United Sates.
+  mutate(state = str_squish(state)) |> 
+  filter_extra_states(state)|> 
+  #Make the tibble longer, giving each state/source pair it's own row
+  pivot_longer(
+    cols = natural_gas:electrical_system_energy_losses, 
+    names_to = "source",
+    values_to = "consumption"
+  ) |> 
+  #Find total energy consumption for each state 
+  group_by(state) |> 
+  summarise(
+    total_consumption = sum(consumption, na.rm = TRUE)
+  )
+  
+# Creating tibble for interactive categorical visualizations ------------------------------
 clean_cat_energy_data <- raw_energy_data |>
   #Remove Alaska, Hawaii, Dist. of Columbia, and Puerto Rico, because we are  
   #graphing just the continental United Sates.
@@ -89,6 +137,8 @@ states_sf <- read_sf("https://rstudio.github.io/leaflet/json/us-states.geojson")
 ```
 
 ```{r}
+#| include: false
+
 # Combine tibbles with info on who to draw states -----------------------------
 #Check that the joins are valid (they are are)
   #check join between state_sf and clean_num_energy_data
@@ -99,20 +149,36 @@ states_sf <- read_sf("https://rstudio.github.io/leaflet/json/us-states.geojson")
   states_sf |> 
     left_join(clean_cat_energy_data, join_by(name == state)) |> 
     print(n = Inf)
+  #check join between state_sf and clean_num_energy_data
+  states_sf |> 
+    left_join(clean_num_energy_data, join_by(name == state)) |> 
+    print(n = Inf)
+  #check join between state_sf and clean_cat_energy_data
+  states_sf |> 
+    left_join(clean_cat_energy_data, join_by(name == state)) |> 
+    print(n = Inf)
 
 #Store valid joins into separate tibbles for visualizations 
-visual_cat_energy_data <- states_sf |> 
+visual_static_cat_energy_data <- states_sf |> 
   left_join(clean_cat_energy_data, by = c("name" = "state"))
 
-visual_num_energy_data <- states_sf |> 
+visual_static_num_energy_data <- states_sf |> 
+  left_join(clean_num_energy_data, by = c("name" = "state"))
+
+visual_interactive_cat_energy_data <- states_sf |> 
+  left_join(clean_cat_energy_data, by = c("name" = "state"))
+
+visual_interactive_num_energy_data <- states_sf |> 
   left_join(clean_num_energy_data, by = c("name" = "state"))
 ```
 
+### Graphing Numerical Static
+
 ```{r}
-#|echo: false
-# Graphing Num Static ---------------------------------------------------------
+#| echo: false
+
 #Creating Bins
-visual_num_energy_data |>
+visual_static_num_energy_data |>
   mutate(consumption_intervals = cut(total_consumption, 
                                      breaks = c(0, 
                                                 200, 
@@ -141,11 +207,13 @@ visual_num_energy_data |>
 
 The graph above is a choropleth of the 48 states of the Continental US showing the total energy consumption of each state in 2022. Some insights that can be gained from this graph are that most of the states in the Rocky Mountains and the Great Plains consumed far less energy in 2022 than states in the Midwest. Additionally, California and Texas seems to be outlines in their region, consuming far more energy than their neighboring states.
 
+### Graphing Categorical Static
+
 ```{r, echo=FALSE}
-#|echo: false
-# Graphing Cat Static ---------------------------------------------------------
+#| echo: false
+
 #Change main_source values to remove '_' and use title case
-visual_cat_energy_data |> 
+visual_static_cat_energy_data |> 
   mutate(main_source = as.factor(main_source),
          main_source = fct_recode(main_source,
          "Imported Electricity" = "imported_electricity",
@@ -167,5 +235,108 @@ visual_cat_energy_data |>
 ```
 
 The graph above is a choropleth of the 48 states of the Continental US showing the most consumed energy source of each state in 2022. Some insights that can be gained from this graph are that most states in the Rocky Mountains, the Midwest, and the Mid-Atlantic consumed more Natural Gas than any other energy source. We also see that most states in the South and Southwest consumed more Imported Electricity than any other energy source. It should also be noted that the very few states that consumed more Petroleum products than any other energy source can all be found in New England.
+
+### Graphing Numerical Interactive
+
+```{r}
+#| echo: false
+
+#Creating pop up labels
+visual_interactive_num_energy_data_labs <- visual_interactive_num_energy_data |> 
+  mutate(labels = str_c (
+    name, " - <br/> Consumed ", total_consumption, " Trillion Btu in 2022")
+  )
+labels_num <- lapply(visual_interactive_num_energy_data_labs$labels, HTML)
+
+#Creating interactive graph
+leaflet(visual_interactive_num_energy_data_labs) |> 
+  setView(-96, 37.8, 4) |> 
+  addTiles() |> 
+  addPolygons(
+    weight = 2,
+    opacity = 1,
+    color = ~colorNumeric("viridis", visual_interactive_num_energy_data_labs$total_consumption)(visual_interactive_num_energy_data_labs$total_consumption),
+    dashArray = "3",
+    fillOpacity = 0.7,
+    highlightOptions = highlightOptions(
+      weight = 5,
+      color = "gray",
+      dashArray = "",
+      fillOpacity = 0.7,
+      bringToFront = TRUE
+    ),
+    label = labels_num,
+    labelOptions = labelOptions(
+      style = list("front-weight" = "normal", padding = "3px 8px"),
+      textSize = "15px",
+      direction = "auto"
+    )
+  )
+
+```
+
+### Graphing Categorial Interactive
+
+```{r}
+#| echo: false
+
+#Creating pop up labels and change main_source values to remove '_' and use 
+#title case.
+visual_interactive_cat_energy_data_labs <- visual_interactive_cat_energy_data |> 
+  mutate(main_source = as.factor(main_source),
+         main_source = fct_recode(main_source,
+         "Imported Electricity" = "imported_electricity",
+         "Natural Gas" ="natural_gas",
+         "Petroleum"= "petroleum"
+         ),
+         labels = str_c(
+                    name, 
+                    " -<br/>Consumed Most of Thier Energy from ", 
+                    main_source, 
+                    " in 2022. <br/> Which was ", 
+                    main_source_consumption,
+                    " trillion Btu"
+                  )
+  )
+
+labels_cat <- lapply(visual_interactive_cat_energy_data_labs$labels, HTML)
+  
+#Creating factors for interactive graphs
+levels(visual_interactive_cat_energy_data_labs$main_source) #Check to see distinct levels
+fact_cat <- colorFactor(c("orange", "cyan", "purple"),
+                        levels(visual_interactive_cat_energy_data_labs$main_source)
+            )
+  
+leaflet(visual_interactive_cat_energy_data_labs) |> 
+    setView(-96, 37.8, 4) |> 
+    addTiles() |> 
+    addPolygons(
+      weight = 2,
+      opacity = 1,
+      color = "black",
+      fillColor = ~ fact_cat(visual_interactive_cat_energy_data_labs$main_source),
+      dashArray = "3",
+      fillOpacity = 0.7,
+      highlightOptions = highlightOptions(
+        weight = 5,
+        color = "grey",
+        dashArray = "",
+        fillOpacity = 0.7,
+        bringToFront = TRUE
+      ),
+      label = labels_cat,
+      labelOptions = labelOptions(
+        style = list("font-weight" = "normal", padding = "3px 8px"),
+        textsize = "15px",
+        direction = "auto"
+      )
+    ) |> 
+    addLegend(pal = fact_cat, 
+              values = ~visual_interactive_cat_energy_data_labs$main_source, 
+              opacity = 0.7, 
+              title = NULL, 
+              position = "bottomright"
+    )
+```
 
 Data Source: [U.S. Energy Information Administration - State Energy Data System](https://www.eia.gov/state/seds/data.php?incfile=/state/seds/sep_sum/html/sum_btu_res.html&sid=US)
