@@ -78,9 +78,9 @@ ul.task-list li input[type="checkbox"] {
     }
 
     const options = {
-      valueNames: ['listing-title','listing-author','listing-image','listing-description',{ data: ['index'] },{ data: ['categories'] },{ data: ['listing-date-sort'] },{ data: ['listing-file-modified-sort'] }],
+      valueNames: ['listing-title','listing-author','listing-image','listing-description','listing-categories',{ data: ['index'] },{ data: ['categories'] },{ data: ['listing-date-sort'] },{ data: ['listing-file-modified-sort'] }],
       
-      searchColumns: ["listing-title","listing-author","listing-image","listing-description"],
+      searchColumns: ["listing-title","listing-author","listing-image","listing-description","listing-categories"],
     };
 
     window['quarto-listings'] = window['quarto-listings'] || {};
@@ -167,9 +167,9 @@ window.Quarto = {
 <div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
 <!-- sidebar -->
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
         
-    </div>
+    <h5 class="quarto-listing-category-title">Categories</h5><div class="quarto-listing-category category-unnumbered"><div class="category" data-category="Data Visualizations">Data Visualizations</div><div class="category" data-category="R">R</div><div class="category" data-category="Text Analysis">Text Analysis</div><div class="category" data-category="Web Scraping">Web Scraping</div></div></div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
@@ -208,6 +208,14 @@ window.Quarto = {
 <h5 class="no-anchor card-title listing-title">
 Mini-Project 1
 </h5>
+<div class="listing-categories">
+<div class="listing-category" onclick="window.quartoListingCategory('R'); return false;">
+R
+</div>
+<div class="listing-category" onclick="window.quartoListingCategory('Data Visualizations'); return false;">
+Data Visualizations
+</div>
+</div>
 <div class="card-text listing-description">
 A Project from Data Science 2 where we explored Choropleth Maps
 </div>
@@ -230,6 +238,44 @@ A Project from Data Science 2 where we explored Choropleth Maps
 <h5 class="no-anchor card-title listing-title">
 Mini-Project 2
 </h5>
+<div class="listing-categories">
+<div class="listing-category" onclick="window.quartoListingCategory('R'); return false;">
+R
+</div>
+<div class="listing-category" onclick="window.quartoListingCategory('Web Scraping'); return false;">
+Web Scraping
+</div>
+</div>
+<div class="card-text listing-description">
+A Project from Data Science 2 where we explored web scraping
+</div>
+<div class="card-attribution card-text-small start">
+<div class="listing-author">
+
+</div>
+</div>
+</div>
+</div>
+</a>
+</div>
+<div class="g-col-1" data-index="2" data-categories="R,Text Analysis" data-listing-file-modified-sort="1732681628230" data-listing-reading-time-sort="8" data-listing-word-count-sort="1571">
+<a href="./projects/mini_project_4/index.html" class="quarto-grid-link">
+<div class="quarto-grid-item card h-100 card-left">
+<p class="card-img-top">
+<img loading="lazy" src="./projects/mini_project_4/mini_project_4_image.png" class="thumbnail-image card-img" style="height: 150px;">
+</p>
+<div class="card-body post-contents">
+<h5 class="no-anchor card-title listing-title">
+Mini-Project 4 - Text Analysis
+</h5>
+<div class="listing-categories">
+<div class="listing-category" onclick="window.quartoListingCategory('R'); return false;">
+R
+</div>
+<div class="listing-category" onclick="window.quartoListingCategory('Text Analysis'); return false;">
+Text Analysis
+</div>
+</div>
 <div class="card-text listing-description">
 A Project from Data Science 2 where we explored web scraping
 </div>

@@ -21,14 +21,14 @@ library(htmltools)
 
 ### Purpose and Scope of the Project
 
-For this project I decided to take data from the U.S Energy Information Administration and create Choropleth maps with them. The two variables I decided to explore was the Total Energy Consumed by State and the Most Consumed Energy Source by State. Then for each variable, I made both a static and interactive version. I did this because I thought it would be valuable to understand where different places draw their energy from and how enegery they draw. This information could be useful in future endeavors to modify our power grid, such as deciding which places need or understanding which places would be the best candidates for alternative energy sources. 
+For this project I decided to take data from the U.S Energy Information Administration and create Choropleth maps with them. The two variables I decided to explore was the Total Energy Consumed by State and the Most Consumed Energy Source by State. Then for each variable, I made both a static and interactive version. I did this because I thought it would be valuable to understand where different places draw their energy from and how enegery they draw. This information could be useful in future endeavors to modify our power grid, such as deciding which places need or understanding which places would be the best candidates for alternative energy sources.
 
 ```{r}
 #| include: false
 
 # Load data and clean ---------------------------------------------------------
 #Data from U.S. Energy Information Administration - State Energy Data System
-raw_energy_data <- read.csv("https://raw.githubusercontent.com/Rodri-Mario/rodri-mario.github.io/refs/heads/main/projects/mini_project_1/data/eai_residential_energy_consumption.csv", na.strings = "NA")
+raw_energy_data <- read.csv("./projects/mini_project_1/data/eai_residential_energy_consumption.csv", na.strings = "NA")
 
 #function to filter out extra states and terriories we don't want to include in
 #our maps.

@@ -1,0 +1,220 @@
+---
+title: 'Mini-Project 4 - Text Analysis'
+description: "A Project from Data Science 2 where we explored web scraping"
+image: mini_project_4_image.png
+categories: [R, Text Analysis]
+draft: false
+format:
+  html: default
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+#| include: false
+library(tidyverse)
+library(tidytext)
+library(textdata)
+```
+
+# Purpose and Scope of the Project
+
+For this project, I will be taking a look into the data set that me and my partner created through scraping the (Billboard Hot 100)\[https://www.billboard.com/charts/hot-100/\] and (Genius)\[https://genius.com/\] in Mini-Project 2. More specifically I'm curious to see if there is any correlation between the lyrics used by artist that have made it into the Billboard Hot 100. Note that the data used for this project was scrapped from the websites above on Nov, 21, 2024 and saved as a csv file for ease of use.
+
+```{r}
+#| include: false
+top_100_lyrics <- read.csv("./projects/mini_project_4/data/Billboard_Top_100_Lyrics.csv")[-1]
+```
+
+# Finding the Top Artists
+
+To start this investigation, I want to look which artists where able to make it into the Billboard Hot 100 most often. To make it easier on myself, I will just be looking at the main artists, i.e. artists whose name appears before an &-sign or before "featuring". Below you can see the top 15 artists who had the most songs appear on the Billboard Hot 100 (would be 10 but due to ties more artists where included).
+
+```{r}
+top_100_lyrics |> 
+  #Filter out songs that we were not able to scrape the lyrics to
+  filter(!is.na(lyrics)) |> 
+  select(artist) |> 
+  #Mutate artists so it only shows the 1st artist mentioned, i.e. no featured artists
+  mutate(artist = str_extract(artist, "^(.*?)( &| Featuring|$)", group = 1),
+         artist = str_trim(artist),
+         )|> 
+  count(artist) |> 
+  slice_max(n, n = 10)
+
+```
+
+# Sentiment Analysis
+
+From here, I want to take the top two artist who had the most songs appear on the Billboard Hot 100 and analyze the lyrics to their songs. My main goal here is to see how the sentiment of the lyrics might impact a song's placement on the Billboard Hot 100.
+
+```{r}
+#| include: false
+top_100_lyrics_labeled <- top_100_lyrics |>
+  mutate(placement  = row_number())
+```
+
+```{r}
+tidy_lyrics_sabrina <- top_100_lyrics_labeled |> 
+  filter(str_detect(artist, "Sabrina Carpenter")) |> 
+  unnest_tokens(lyric, lyrics, token = "words")
+```
+
+```{r}
+#| echo: true
+tidy_lyrics_sabrina |> 
+  inner_join(get_sentiments("bing"), 
+             relationship = "many-to-many", 
+             by = join_by(lyric == word)
+             ) |> 
+  count(lyric, sentiment) |> 
+  group_by(sentiment) |> 
+  slice_max(n, n = 10) |> 
+  ungroup() |> 
+  ggplot(aes(x = fct_reorder(lyric, n), y = n, fill = sentiment)) +
+  geom_col(show.legend = FALSE) +
+  coord_flip() +
+  facet_wrap( ~ sentiment, scales = "free") +
+  labs(title = "Sabrina Carpenter's Most Common Lyrics by Sentiments",
+       y = "Count", 
+       x = "Lyrics"
+       )
+
+
+```
+
+From the chart above, notice that Sabrina Carpenter uses a lot more unique words with a negative sentiment according to bing lexicon in her songs that reach the Billboard Hot 100. While comparably she uses often reuses words with a positive sentiment in her songs.
+
+```{r}
+tidy_lyrics_zach <- top_100_lyrics_labeled |> 
+  filter(str_detect(artist, "Zach Bryan")) |> 
+  unnest_tokens(lyric, lyrics, token = "words")
+```
+
+```{r}
+#| echo: true
+tidy_lyrics_zach |> 
+  inner_join(get_sentiments("bing"), 
+             relationship = "many-to-many", 
+             by = join_by(lyric == word)
+             ) |> 
+  count(lyric, sentiment) |> 
+  group_by(sentiment) |> 
+  slice_max(n, n =10) |> 
+  ungroup() |> 
+  ggplot(aes(x = fct_reorder(lyric, n), y = n, fill = sentiment)) +
+  geom_col(show.legend = FALSE) +
+  coord_flip() +
+  facet_wrap( ~ sentiment, scales = "free") +
+  labs(title = "Zach Bryan's Most Common Lyrics by Sentiments",
+       y = "Count", 
+       x = "Lyrics"
+       )
+```
+
+Seems that this is the case with Zach Bryan's lyrics as well, but this time notice that the count of each lyric is significantly lower than the lyrics that Sabrina Carpenter uses. This could be due to Sabrina having having two more songs on the Billboard Hot 100 over Zach Bryan or it could also mean that Sabrina resues the same lyrics more often compared to Zach. How interesting!
+
+Now I want to shift my focus these artists individual songs instead of the looking at lyrics from all their songs on the Billboard Hot 100. To do this I want to track the trajectory of each song and see if that has any colorlation on how high the song was on Billboard Hot 100.
+
+```{r}
+#| echo: true
+tidy_lyrics_sabrina |> 
+  group_by(song) |> 
+  #index approximates one line of the song
+  mutate(index = row_number() %/% 10) |> 
+  ungroup() |> 
+  inner_join(get_sentiments("bing"), 
+             relationship = "many-to-many", 
+             by = join_by(lyric == word)
+             ) |> 
+  count(song, placement, index, sentiment) |> 
+  pivot_wider(names_from = sentiment, values_from = n, values_fill = 0) |>
+  mutate(sentiment = positive - negative) |>
+  ggplot(aes(x = index, y = sentiment, fill = factor(placement))) +
+    geom_col() +
+    facet_wrap(~fct_reorder(song, placement), ncol = 2, scales = "free_x")+
+    labs(title = "Sentiment Trajectory of Sabrina Carpenter's Songs that Made Billboard Hot 100", 
+         x = "Appox. Song Line", 
+         y = "Overall Sentiment of Line", 
+         fill = "Placement")
+  
+```
+
+```{r}
+#| echo: true
+tidy_lyrics_zach |> 
+  group_by(song) |> 
+  #index approximates one line of the song
+  mutate(index = row_number() %/% 10) |> 
+  ungroup() |> 
+  inner_join(get_sentiments("bing"), 
+             relationship = "many-to-many", 
+             by = join_by(lyric == word)
+             ) |> 
+  count(song, placement, index, sentiment) |> 
+  pivot_wider(names_from = sentiment, values_from = n, values_fill = 0) |>
+  mutate(sentiment = positive - negative) |>
+  ggplot(aes(x = index, y = sentiment, fill = factor(placement))) +
+    geom_col() +
+    facet_wrap(~fct_reorder(song, placement), ncol = 2, scales = "free_x")+
+    labs(title = "Sentiment Trajectory of Zach Bryan's Songs that Made Billboard Hot 100", 
+         x = "Appox. Song Line", 
+         y = "Overall Sentiment of Line", 
+         fill = "Placement")
+```
+
+Sadly since the bing lexicon doesn't contain sentiment values for all words, it seems that some lyrics and therefore song lines where left out of the chart. With the data that did come through, it seems that the sentiment trajectory of each song has little to do with how high it placed in the Billboard Hot 100, as there doesn't seem to be a clear cut pattern bewteen the sentiment trjectory of a song and how it ranked on the Billbord Hot 100.
+
+# Punctuation in Lyrics
+
+For the final part of this mini-project, I just wanted to find out one simple question that came to mind after doing all the sentiment analysis, which artist uses the most punctuation in their songs? Below you can see the code used to create the basis of the following tables.
+
+```{r}
+artist_punctuation <- top_100_lyrics |> 
+  #Filter out songs that we were not able to scrape the lyrics to
+  filter(!is.na(lyrics)) |> 
+  #Mutate artists so it only shows the 1st artist mentioned, i.e. no featured artists
+  mutate(artist = str_extract(artist, "^(.*?)( &| Featuring|$)", group = 1),
+         artist = str_trim(artist),
+         #Count the number of !-points found in lyrics
+         exclamation_count = str_count(lyrics, "!"),
+         #Count the number of ?-marks found in lyrics
+         question_count = str_count(lyrics, "\\?"),
+         #count the number of . found in lyrics
+         period_count = str_count(lyrics, "\\.")) |> 
+  #Group by artist name and sum up all uses of "!", "?", and "." uses in all the 
+  #artist's songs
+  group_by(artist) |> 
+  summarise(
+    exclamation_count = sum(exclamation_count),
+    question_count = sum(question_count),
+    period_count = sum(period_count), 
+    total_punctuation = sum(exclamation_count, question_count, period_count)
+  )
+```
+
+### Artists Who Use the Most Puncuation Overall
+
+```{r}
+artist_punctuation |> slice_max(total_punctuation, n = 10)
+```
+
+### Artists who use the Most Exclamation Marks
+
+```{r}
+artist_punctuation |> slice_max(exclamation_count, n = 10)
+```
+
+### Artists who Use the Most Question Marks
+
+```{r}
+artist_punctuation |> slice_max(question_count, n = 10)
+```
+
+### Artists who Use the Most Periods
+
+```{r}
+artist_punctuation |> slice_max(period_count, n = 10)
+```
+
+From these tables, we can clearly see that if artists use any puncutation, it will most likely be a question mark.
