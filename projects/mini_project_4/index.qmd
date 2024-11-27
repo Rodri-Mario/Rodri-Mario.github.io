@@ -19,7 +19,7 @@ library(textdata)
 
 # Purpose and Scope of the Project
 
-For this project, I will be taking a look into the data set that me and my partner created through scraping the (Billboard Hot 100)\[https://www.billboard.com/charts/hot-100/\] and (Genius)\[https://genius.com/\] in Mini-Project 2. More specifically I'm curious to see if there is any correlation between the lyrics used by artist that have made it into the Billboard Hot 100. Note that the data used for this project was scrapped from the websites above on Nov, 21, 2024 and saved as a csv file for ease of use.
+For this project, I will be taking a look into the data set that me and my partner created through scraping the [Billboard Hot 100](https://www.billboard.com/charts/hot-100/) and [Genius](https://genius.com/) in Mini-Project 2. More specifically I'm curious to see if there is any correlation between the lyrics used by artist that have made it into the Billboard Hot 100. Note that the data used for this project was scrapped from the websites above on Nov, 21, 2024 and saved as a csv file for ease of use.
 
 ```{r}
 #| include: false
